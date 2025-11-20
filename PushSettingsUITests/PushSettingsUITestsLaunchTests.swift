@@ -1,10 +1,3 @@
-//
-//  PushSettingsUITestsLaunchTests.swift
-//  PushSettingsUITests
-//
-//  Created by Umair Hasan on 19/11/2025.
-//
-
 import XCTest
 
 final class PushSettingsUITestsLaunchTests: XCTestCase {

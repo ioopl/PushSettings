@@ -1,21 +1,17 @@
-//
-//  ContentView.swift
-//  PushSettings
-//
-//  Created by Umair Hasan on 19/11/2025.
-//
-
 import SwiftUI
+import Combine
 
 struct ContentView: View {
+    
+    @StateObject private var viewModel = PushRegistrationViewModel(
+            sessionUC: SessionUCImplementation(),
+            pushUC: PushAuthenticationUCImplementation(),
+            vendorUC: VendorUCImplementation(),
+            notificationService: NotificationServiceImplementation(),
+            uuid: "device-uuid-123")
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        PushRegistrationScreen(viewModel: viewModel)
     }
 }
 
