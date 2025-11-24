@@ -27,25 +27,25 @@ final class PushRegistrationViewModel: ObservableObject {
     // MARK: - Dependencies
     
     private let sessionUC: SessionUC
-    private let pushUC: PushAuthenticationUC
+    private let pushAuthenticationUC: PushAuthenticationUC
     private let vendorUC: VendorUC
     private let notificationService: NotificationService
     private let uuid: String
     private var cachedSession: String?
     
+    /// An object that represents an active subscription. The Set<AnyCancellable> is just "all the active subscriptions we want to keep alive".
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Init
     
-    init(
-        sessionUC: SessionUC,
-        pushUC: PushAuthenticationUC,
+    init(sessionUC: SessionUC,
+        pushAuthenticationUC: PushAuthenticationUC,
         vendorUC: VendorUC,
         notificationService: NotificationService,
-        uuid: String
-    ) {
+        uuid: String) {
+        
         self.sessionUC = sessionUC
-        self.pushUC = pushUC
+        self.pushAuthenticationUC = pushAuthenticationUC
         self.vendorUC = vendorUC
         self.notificationService = notificationService
         self.uuid = uuid
@@ -111,7 +111,7 @@ final class PushRegistrationViewModel: ObservableObject {
                 // 3. In parallel, ask both backends for status
                 // push status
                 async let pushStatusAsync: RegistrationStatus? = {
-                    let asyncSequence = self.pushUC.getRegistrationStatus(session: session).values
+                    let asyncSequence = self.pushAuthenticationUC.getRegistrationStatus(session: session).values
                     return try await asyncSequence.first(where: { _ in
                         true
                     })
@@ -167,6 +167,7 @@ final class PushRegistrationViewModel: ObservableObject {
      When we call it, it marks the screen as loading (isLoading = true), clears any previous error/info messages, and then kicks off an asynchronous Combine pipeline. That pipeline starts by calling sessionUC.fetchSession(), which returns a publisher that will eventually emit a String session or an error. After the session is fetched, it waits an extra 3 seconds using .delay (to satisfy the requirement), then uses flatMap to call pushUC.getRegistrationStatus(session:) and attach the session to that result. Next, it flatMaps again to call vendorUC.checkRegistrationStatusPublisher(uuid:), combining everything into a single tuple (session, pushStatus, vendorStatus). The .receive(on: DispatchQueue.main) ensures that the values and completion are delivered on the main thread, so updating @Published properties is UI-safe. And finally, .sink subscribes to this whole publisher chain: in the completion closure it stops the loading state and sets an error if needed, and in receiveValue it caches the session and computes whether the user is effectively registered by calling applyCombinedStatus. In short it is an async method in behaviour (it returns immediately and finishes later), but it uses Combine publishers rather than async/await, and its "result" is reflected in the ViewModel’s observable properties, not in a return value.
      */
     private func loadCurrentRegistrationState_() {
+        
         isLoading = true
         errorMessage = nil
         infoMessage = nil
@@ -178,10 +179,10 @@ final class PushRegistrationViewModel: ObservableObject {
             .delay(for: .seconds(3), scheduler: DispatchQueue.main)
         
         // 3. For the obtained session, query push status
-            .flatMap { [pushUC] session in
+            .flatMap { [pushAuthenticationUC] session in
                 
                 // Keep the session for later registration calls
-                return pushUC.getRegistrationStatus(session: session)
+                return pushAuthenticationUC.getRegistrationStatus(session: session)
                     .map { (session, $0) } // attach session to result
             }
         
@@ -203,8 +204,10 @@ final class PushRegistrationViewModel: ObservableObject {
                 self.isLoading = false
                 
                 switch completion {
+                    
                 case .failure(let error):
                     self.errorMessage = "Failed to load status: \(error.localizedDescription)"
+                    
                 case .finished:
                     break
                 }
@@ -212,6 +215,7 @@ final class PushRegistrationViewModel: ObservableObject {
                 guard let self = self else { return }
                 
                 self.cachedSession = session
+                
                 self.applyCombinedStatus(pushStatus: pushStatus,
                                          vendorStatus: vendorStatus)
             }
@@ -247,7 +251,7 @@ final class PushRegistrationViewModel: ObservableObject {
         
         // Call both de-register use cases in parallel
         Publishers.Zip(
-            pushUC.deRegister(with: uuid),
+            pushAuthenticationUC.deRegister(with: uuid),
             vendorUC.deRegisterUser(with: uuid)
         )
         .receive(on: DispatchQueue.main)
@@ -257,8 +261,10 @@ final class PushRegistrationViewModel: ObservableObject {
             self.isLoading = false
             
             switch completion {
+                
             case .failure(let error):
                 self.errorMessage = "De-registration failed: \(error.localizedDescription)"
+                
             case .finished:
                 break
             }
@@ -288,9 +294,9 @@ final class PushRegistrationViewModel: ObservableObject {
                     .map { session in (token, session) }
             }
         // 3. Once we have token + session, call both register endpoints
-            .flatMap { [pushUC, vendorUC, uuid] (token, session) in
+            .flatMap { [pushAuthenticationUC, vendorUC, uuid] (token, session) in
                 Publishers.Zip(
-                    pushUC.register(with: uuid, session: session, token: token),
+                    pushAuthenticationUC.register(with: uuid, session: session, token: token),
                     vendorUC.registerUser(with: uuid)
                 )
             }
@@ -299,9 +305,11 @@ final class PushRegistrationViewModel: ObservableObject {
                 guard let self = self else { return }
                 
                 self.isLoading = false
+
                 switch completion {
                 case .failure(let error):
                     self.errorMessage = "Registration failed: \(error.localizedDescription)"
+                    
                 case .finished:
                     break
                 }

@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct PushRegistrationScreen: View {
+    
     @StateObject var viewModel: PushRegistrationViewModel
+    
     private var toggleLabelText: String {
         viewModel.isRegistered
         ? "Disable push notifications"

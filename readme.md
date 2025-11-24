@@ -1,4 +1,109 @@
-# PushSettings
+
+# The Task - A Push Registration Toggle Task
+
+You are given the following protocols and enum:
+
+```
+enum RegistrationStatus {
+    case register
+    case unregister
+    case anotherDevice
+}
+
+protocol PushAuthenticationUC {
+    func getRegistrationStatus(session: String) -> AnyPublisher<RegistrationStatus, Error>
+    func register(with uuid: String, session: String, token: String) -> AnyPublisher<Bool, Error>
+    func deRegister(with uuid: String) -> AnyPublisher<Bool, Error>
+}
+
+protocol SessionUC {
+    func fetchSession() -> AnyPublisher<String, Error>
+}
+
+protocol VendorUC {
+    func checkRegistrationStatusPublisher(uuid: String) -> AnyPublisher<RegistrationStatus, Error>
+    func registerUser(with uuid: String) -> AnyPublisher<Bool, Error>
+    func deRegisterUser(with uuid: String) -> AnyPublisher<Bool, Error>
+}
+```
+
+```
+---
+
+## Description
+
+Create a simple SwiftUI screen that displays a **toggle** representing the users push registration state.
+
+The toggles state depends on the following logic:
+
+* The user is **registered** only if
+  `PushAuthenticationUC.getRegistrationStatus(session:)` returns `.register` **and**
+  `VendorUC.checkRegistrationStatusPublisher(uuid:)` returns `.register`.
+
+* If one returns `.register` and the other `.unregister`, the combined state should be **unregister**.
+
+* If `PushAuthenticationUC.getRegistrationStatus(session:)` returns `.anotherDevice`,
+  the state should be **unregister**, and an appropriate **message** should be shown
+  (e.g. Registered on another device).
+
+---
+
+## Additional Conditions
+
+* `getRegistrationStatus` requires a valid `session`, obtained from `SessionUC.fetchSession()`.
+
+* The session fetch is **slow**, so there must be a **3-second delay** after `fetchSession` completes
+  before calling `getRegistrationStatus`.
+
+---
+
+## Toggle Behaviour
+
+Once the current registration state is determined, the toggle can be used to **register** or **de-register**.
+
+### De-registration Flow
+
+* Calls both:
+
+  * `PushAuthenticationUC.deRegister(with:)`
+  * `VendorUC.deRegisterUser(with:)`
+* De-registration succeeds only if **both calls return success**.
+
+### Registration Flow
+
+Registration requires:
+
+* Notification permission via `UNNotificationSettings`
+* Push token obtained from the same
+* A valid `session` (with the same 3-second delay after fetching it)
+* Calls both:
+
+  * `PushAuthenticationUC.register(with:session:token:)`
+  * `VendorUC.registerUser(with:)`
+* Registration succeeds only if **both calls return success**.
+
+---
+
+## Expected Result
+
+A SwiftUI screen that includes:
+
+* One **toggle** showing the registration status
+* A **message** when the state is `.anotherDevice`
+* Ability to trigger **register** and **de-register** flows
+* Handling for **loading** and **error** states
+
+
+## Notes
+
+* Focus on **clear analysis and structure** of the logic.
+* You do **not** need to provide a working backend, mocks are fine.
+* Think about how this screen would integrate in a **real app** (UI consistency, user flow, timing).
+* You may include diagrams, pseudocode, or a brief explanation of your design.
+```
+
+# The Solution - PushSettings
+
 
 A Simple SwiftUI Push Notifications Enable/Disable screen.
 

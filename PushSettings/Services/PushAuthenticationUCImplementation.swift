@@ -7,9 +7,11 @@ final class PushAuthenticationUCImplementation: PushAuthenticationUC {
     var shouldSucceed: Bool = true
     
     func getRegistrationStatus(session: String) -> AnyPublisher<RegistrationStatus, Error> {
+        
         /// Just(registrationStatus): A publisher that emits "registrationStatus" once then completes successfully, never fails.
         /// .setFailureType(to: Error.self): Changes the generic failure type from Never to Error. "Treating it as if it could fail with Error, even though it never does."
         /// .eraseToAnyPublisher(): Wraps that concrete publisher into AnyPublisher<RegistrationStatus, Error>, to match the protocol and hide the exact type.
+        /// Just(registrationStatus) : Creates a publisher with behavior: Emits one value = registrationStatus Then completes successfully. It never fails
         Just(registrationStatus)
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
