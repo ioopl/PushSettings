@@ -5,7 +5,7 @@ struct ContentView: View {
     
     @StateObject private var viewModel = PushRegistrationViewModel(
             sessionUC: SessionUCImplementation(),
-            pushUC: PushAuthenticationUCImplementation(),
+            pushAuthenticationUC: PushAuthenticationUCImplementation(),
             vendorUC: VendorUCImplementation(),
             notificationService: NotificationServiceImplementation(),
             uuid: "device-uuid-123")

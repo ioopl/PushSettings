@@ -41,7 +41,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
         
         let vm = PushRegistrationViewModel(
             sessionUC: sessionUC,
-            pushUC: pushUC,
+            pushAuthenticationUC: pushUC,
             vendorUC: vendorUC,
             notificationService: notificationService,
             uuid: "test-uuid"

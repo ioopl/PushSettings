@@ -23,7 +23,18 @@ final class PushSettingsUITests: XCTestCase {
         app.launch()
         
         // 1. Find the toggle by its label text
-        let toggle = app.switches.element(matching: XCUIElement.ElementType.switch, identifier: "007") //app.switches["Enable push notifications"].firstMatch
+        
+        let toggle = app.switches["007"] //.element(matching: XCUIElement.ElementType.switch, identifier: "007") //app.switches["Enable push notifications"].firstMatch
+        
+        let currentOnString = toggle.value as? String
+        let currentOn = currentOnString == "1"
+        if currentOn != true {
+            print("currentOn: ", currentOn)
+            print("I am here ")
+            toggle.tap()
+        }
+            
+        
         
         // 2. Wait until the toggle appears
         let exists = toggle.waitForExistence(timeout: 5.0)
