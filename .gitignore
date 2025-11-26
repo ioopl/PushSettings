@@ -5,6 +5,10 @@ build/
 *.xcuserdata/
 *.xcscmblueprint
 
+xcuserdata
+profile
+*.moved-aside
+
 # Swift Package Manager
 .swiftpm/
 .build/
@@ -30,6 +34,7 @@ GoogleService-Info.plist
 *.mode2v3
 *.perspectivev3
 *.pbxuser
+*.xcworkspace
 
 # Playground files
 timeline.xctimeline
