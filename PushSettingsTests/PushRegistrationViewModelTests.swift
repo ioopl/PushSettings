@@ -9,7 +9,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     private var cancellables = Set<AnyCancellable>()
     
-    // Helper to build a fresh VM with configurable mocks
+    /// Helper to build a fresh VM with configurable mocks
     private func makeViewModel(
         pushStatus: RegistrationStatus = .unregister,
         vendorStatus: RegistrationStatus = .unregister,
@@ -65,7 +65,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
         let exp = expectation(description: "becomes registered")
         
         vm.$isRegistered
-            .dropFirst() // initial false
+            .dropFirst() /// initial false
             .sink { value in
                 if value == true {
                     exp.fulfill()
@@ -75,7 +75,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
         
         vm.onAppear()
         
-        // 3 seconds internal delay in ViewModel; give a bit extra
+        /// 3 seconds internal delay in ViewModel; give a bit extra
         waitForExpectations(timeout: 4.0)
         
         XCTAssertTrue(vm.isRegistered)
@@ -128,7 +128,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
         
-        // No need to call onAppear for this test, we start from unregistered
+        /// No need to call onAppear for this test, we start from unregistered
         vm.userSetToggle(to: true)
         
         waitForExpectations(timeout: 4.0)
@@ -169,7 +169,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     func testToggleOff_triggersDeregistration() {
         
-        // Start with both systems registered
+        /// Start with both systems registered
         let (vm, pushUC, vendorUC, _) = makeViewModel(
             pushStatus: .register,
             vendorStatus: .register
@@ -190,7 +190,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
         wait(for: [becameRegistered], timeout: 4.0)
         XCTAssertTrue(vm.isRegistered)
         
-        // Test toggling off
+        /// Test toggling off
         let becameUnregistered = expectation(description: "becomes unregistered after toggle off")
         
         vm.$isRegistered
@@ -214,17 +214,17 @@ final class PushRegistrationViewModelTests: XCTestCase {
         // MARK: - applyCombinedStatus() tests
 
         func testApplyCombinedStatus_anotherDevice_overridesVendor() {
-            // Given a fresh VM
+            /// Given a fresh VM
             let (vm, _, _, _) = makeViewModel()
 
-            // When pushStatus is .anotherDevice and vendor is .register
+            /// When pushStatus is .anotherDevice and vendor is .register
             vm.applyCombinedStatus(pushStatus: .anotherDevice, vendorStatus: .register)
 
-            // Then we should be unregistered with the special message
+            /// Then we should be unregistered with the special message
             XCTAssertFalse(vm.isRegistered)
             XCTAssertEqual(vm.infoMessage, "Registered on another device.")
 
-            // And even if vendor says .unregister, result is the same
+            /// And even if vendor says .unregister, result is the same
             vm.applyCombinedStatus(pushStatus: .anotherDevice, vendorStatus: .unregister)
 
             XCTAssertFalse(vm.isRegistered)
@@ -249,7 +249,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
     func testApplyCombinedStatus_mixedOrUnregister_combinations_setRegisteredFalse() {
         let (vm, _, _, _) = makeViewModel()
         
-        // All combinations that are NOT (.register, .register) and not (.anotherDevice, _)
+        /// All combinations that are NOT (.register, .register) and not (.anotherDevice, _)
         let cases: [(RegistrationStatus, RegistrationStatus)] = [
             (.register, .unregister),
             (.unregister, .register),
@@ -282,7 +282,7 @@ final class PushRegistrationViewModelTests: XCTestCase {
         XCTAssertEqual(pushUC.registrationStatus, .anotherDevice)
         XCTAssertEqual(vendorUC.registrationStatus, .register)
         
-        // We expect: isRegistered becomes false, and infoMessage is set
+        /// We expect: isRegistered becomes false, and infoMessage is set
         let infoExpectation = expectation(description: "infoMessage set for anotherDevice")
         
         vm.$infoMessage
@@ -292,13 +292,13 @@ final class PushRegistrationViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
         
-        // When: the screen appears (triggers loadCurrentRegistrationState)
+        /// When: the screen appears (triggers loadCurrentRegistrationState)
         vm.onAppear()
         
-        // ViewModel has an internal delay (3s) so we give it a bit more
+        /// ViewModel has an internal delay (3s) so we give it a bit more
         waitForExpectations(timeout: 4.0)
         
-        // Then: state is unregistered + message shown
+        /// Then: state is unregistered + message shown
         XCTAssertFalse(vm.isRegistered)
         XCTAssertEqual(vm.infoMessage, "Registered on another device.")
         XCTAssertNil(vm.errorMessage)
@@ -312,14 +312,14 @@ final class PushRegistrationViewModelTests: XCTestCase {
         // Given: a fresh ViewModel (default isRegistered should be false)
         let (vm, _, _, _) = makeViewModel()
 
-        // Initially unregistered → label should say "Enable..."
+        /// Initially unregistered → label should say "Enable..."
         XCTAssertFalse(vm.isRegistered)
         XCTAssertEqual(vm.toggleLabelText, "Enable push notifications")
 
-        // When: we make the combined status registered
+        /// When: we make the combined status registered
         vm.applyCombinedStatus(pushStatus: .register, vendorStatus: .register)
 
-        // Then: state and label should both reflect "registered"
+        /// Then: state and label should both reflect "registered"
         XCTAssertTrue(vm.isRegistered)
         XCTAssertEqual(vm.toggleLabelText, "Disable push notifications")
     }
@@ -342,11 +342,11 @@ final class PushRegistrationViewModelTests: XCTestCase {
         
         let binding = vm.toggleBinding
         
-        // 1) Getter should reflect current isRegistered
+        /// 1) Getter should reflect current isRegistered
         XCTAssertFalse(vm.isRegistered)
         XCTAssertEqual(binding.wrappedValue, false, "Binding getter should mirror isRegistered")
         
-        // 2) When we set the binding to true, it should go through userSetToggle
+        /// 2) When we set the binding to true, it should go through userSetToggle
         let becameRegistered = expectation(description: "VM becomes registered via binding")
         
         vm.$isRegistered
@@ -358,14 +358,13 @@ final class PushRegistrationViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
         
-        // This uses the Binding's setter and calls userSetToggle(to: true)
+        /// This uses the Binding's setter and calls userSetToggle(to: true)
         binding.wrappedValue = true
         
         wait(for: [becameRegistered], timeout: 4.0)
         
-        // 3) After async flow, isRegistered AND binding getter should both be true
+        /// 3) After async flow, isRegistered AND binding getter should both be true
         XCTAssertTrue(vm.isRegistered)
         XCTAssertEqual(binding.wrappedValue, true)
     }
-
 }

@@ -60,12 +60,11 @@ final class PushRegistrationViewModel: ObservableObject {
     /// Binding target for the Toggle. We don't let the toggle write directly to `isRegistered`;
     /// instead we interpret the user's intent and run the correct flow.
     func userSetToggle(to newValue: Bool) {
-        // If already loading, ignore taps to avoid overlapping operations.
         guard !isLoading else {
             return
         }
         
-        // If the value didn't change, nothing to do.
+        /// If the value didn't change, nothing to do.
         guard newValue != isRegistered else {
             return
         }
@@ -79,106 +78,23 @@ final class PushRegistrationViewModel: ObservableObject {
     
     // MARK: - Initial state loading
 
-    /// The method loadCurrentRegistrationState() is a private function on the ViewModel that takes no parameters and returns nothing (Void) – instead, it works entirely through side effects on the ViewModel’s state. This method itself stays sync, but it kicks off async work in a Task.
-
-    private func loadCurrentRegistrationState() {
-        isLoading = true
-        errorMessage = nil
-        infoMessage = nil
-
-        Task { [weak self] in
-            guard let self else { return }
-            
-            do {
-                // 1. Fetch session from Combine publisher using async/await
-                // let sessionPublisher = sessionUC.fetchSession()
-                // Take the first value from the publisher as an async sequence
-                // let session = try await sessionPublisher.values.first
-                
-                // 1. Fetch session from Combine publisher using async/await
-                let sessionAsyncSequence = sessionUC.fetchSession().values
-
-                // first(where:) is an async method on the async sequence
-                guard let session = try await sessionAsyncSequence.first(where: { _ in
-                    true
-                }) else {
-                    throw RegistrationError.missingSession
-                }
-                
-                // 2. Add 3 second delay AFTER fetch completes
-                try await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-                
-                // 3. In parallel, ask both backends for status
-                // push status
-                async let pushStatusAsync: RegistrationStatus? = {
-                    let asyncSequence = self.pushAuthenticationUC.getRegistrationStatus(session: session).values
-                    return try await asyncSequence.first(where: { _ in
-                        true
-                    })
-                }()
-                
-                async let vendorStatusAsync: RegistrationStatus? =
-                vendorUC.checkRegistrationStatusPublisher(uuid: self.uuid).values.first(where: {_ in
-                    true
-                })
-                
-                guard
-                    let pushStatus = try await pushStatusAsync,
-                    let vendorStatus = try await vendorStatusAsync
-                else {
-                    throw RegistrationError.missingStatus
-                }
-                
-                // 4. Back on main actor, update state
-                await MainActor.run {
-                    self.cachedSession = session
-                    self.applyCombinedStatus(pushStatus: pushStatus,
-                                             vendorStatus: vendorStatus)
-                    self.isLoading = false
-                }
-            } catch {
-                
-                // Back to the main actor for UI state
-                await MainActor.run {
-                    self.isLoading = false
-                    
-                    switch error {
-                    case RegistrationError.missingSession:
-                        self.errorMessage = "Could not load session."
-                    case RegistrationError.missingStatus:
-                        self.errorMessage = "Could not load registration status."
-                    default:
-                        self.errorMessage = "Failed to load status: \(error.localizedDescription)"
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Initial state loading - An alternate implementation of loadCurrentRegistrationState via Combine
-    /**
-     The whole chain
-     sessionUC.fetchSession() ... .flatMap ... .flatMap ... .receive(on:)
-     is a publisher pipeline.
-     The root publisher is sessionUC.fetchSession().
-     */
     /**
      This method, loadCurrentRegistrationState(), is a private function on the ViewModel that takes no parameters and returns nothing (Void) instead, it works entirely through side effects on the ViewModel’s state.
      When we call it, it marks the screen as loading (isLoading = true), clears any previous error/info messages, and then kicks off an asynchronous Combine pipeline. That pipeline starts by calling sessionUC.fetchSession(), which returns a publisher that will eventually emit a String session or an error. After the session is fetched, it waits an extra 3 seconds using .delay (to satisfy the requirement), then uses flatMap to call pushUC.getRegistrationStatus(session:) and attach the session to that result. Next, it flatMaps again to call vendorUC.checkRegistrationStatusPublisher(uuid:), combining everything into a single tuple (session, pushStatus, vendorStatus). The .receive(on: DispatchQueue.main) ensures that the values and completion are delivered on the main thread, so updating @Published properties is UI-safe. And finally, .sink subscribes to this whole publisher chain: in the completion closure it stops the loading state and sets an error if needed, and in receiveValue it caches the session and computes whether the user is effectively registered by calling applyCombinedStatus. In short it is an async method in behaviour (it returns immediately and finishes later), but it uses Combine publishers rather than async/await, and its "result" is reflected in the ViewModel’s observable properties, not in a return value.
      */
-    private func loadCurrentRegistrationState_() {
+    private func loadCurrentRegistrationState() {
         
         isLoading = true
         errorMessage = nil
         infoMessage = nil
         
-        // 1. Fetch session
+        /// 1. Fetch session
         sessionUC.fetchSession()
         
-        // 2. Add 3 second delay AFTER fetch completes
+        /// 2. Add 3 second delay AFTER fetch completes
             .delay(for: .seconds(3), scheduler: DispatchQueue.main)
         
-        // 3. For the obtained session, query push status
+        /// 3. For the obtained session, query push status
             .flatMap { [pushAuthenticationUC] session in
                 
                 // Keep the session for later registration calls
@@ -186,7 +102,7 @@ final class PushRegistrationViewModel: ObservableObject {
                     .map { (session, $0) } // attach session to result
             }
         
-        // 4. Combine with vendor status in parallel
+        /// 4. Combine with vendor status in parallel
             .flatMap { [vendorUC, uuid] (session, pushStatus) in
                 vendorUC.checkRegistrationStatusPublisher(uuid: uuid)
                     .map { vendorStatus in
@@ -194,10 +110,10 @@ final class PushRegistrationViewModel: ObservableObject {
                     }
             }
         
-        // 5. Ensure UI updates happen on main thread
+        /// 5. Ensure UI updates happen on main thread
             .receive(on: DispatchQueue.main)
         
-        // 6. Subscribe
+        /// 6. Subscribe
             .sink { [weak self] completion in
                 guard let self = self else { return }
                 
@@ -226,17 +142,17 @@ final class PushRegistrationViewModel: ObservableObject {
                                      vendorStatus: RegistrationStatus) {
         
         switch (pushStatus, vendorStatus) {
-        // 1) Special case: push says "anotherDevice" – vendor doesn’t matter
+        /// 1) Special case: push says "anotherDevice" – vendor doesn’t matter
         case (.anotherDevice, _):
             isRegistered = false
             infoMessage = "Registered on another device."
 
-        // 2) Both say "register" = effectively registered
+        /// 2) Both say "register" = effectively registered
         case (.register, .register):
             isRegistered = true
             infoMessage = nil
 
-        // 3) Everything else = treated as unregistered
+        /// 3) Everything else = treated as unregistered
         default:
             isRegistered = false
             infoMessage = nil
@@ -249,7 +165,7 @@ final class PushRegistrationViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // Call both de-register use cases in parallel
+        /// Call both de-register use cases in parallel
         Publishers.Zip(
             pushAuthenticationUC.deRegister(with: uuid),
             vendorUC.deRegisterUser(with: uuid)
@@ -285,15 +201,17 @@ final class PushRegistrationViewModel: ObservableObject {
         errorMessage = nil
         infoMessage = nil
         
-        // 1. Ask for notification permission & token
+        /// 1. Ask for notification permission & token
         notificationService.requestPermissionAndToken()
-        // 2. Get a session (again with a delay)
+       
+        /// 2. Get a session (again with a delay)
             .flatMap { [sessionUC] token in
                 sessionUC.fetchSession()
                     .delay(for: .seconds(3), scheduler: DispatchQueue.main)
                     .map { session in (token, session) }
             }
-        // 3. Once we have token + session, call both register endpoints
+        
+        /// 3. Once we have token + session, call both register endpoints
             .flatMap { [pushAuthenticationUC, vendorUC, uuid] (token, session) in
                 Publishers.Zip(
                     pushAuthenticationUC.register(with: uuid, session: session, token: token),

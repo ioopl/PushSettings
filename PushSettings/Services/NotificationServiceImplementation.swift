@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-// Fake notification service – in real App we will use APNS token
+/// Fake notification service – in real App we will use APNS token
 enum MockNotificationError: Error {
     case denied
 }
