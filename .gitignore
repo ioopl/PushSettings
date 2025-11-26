@@ -1,0 +1,58 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+*.xcuserdata/
+*.xcscmblueprint
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Firebase / Crashlytics
+GoogleService-Info.plist
+
+# User-specific Xcode files
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.pbxuser
+
+# Playground files
+timeline.xctimeline
+playground.xcworkspace
+
+# macOS / Finder
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# iOS device logs
+*.mobileprovision
+*.ipa
+
+# Symbolicated dSYM files
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager dependency checkouts (older SPM)
+Packages/
+
+# Logs / temp
+*.log
+*.swp
+*.swo
+*.tmp
