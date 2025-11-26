@@ -25,7 +25,7 @@ struct PushRegistrationScreen: View {
             }
             .disabled(viewModel.isLoading)
             .padding()
-            .accessibilityIdentifier("007")
+            .accessibilityIdentifier("pushNotificationToggle")
             
             if let info = viewModel.infoMessage {
                 Text(info)

@@ -24,7 +24,7 @@ final class PushSettingsUITests: XCTestCase {
         
         // 1. Find the toggle by its label text
         
-        let toggle = app.switches["007"] //.element(matching: XCUIElement.ElementType.switch, identifier: "007") //app.switches["Enable push notifications"].firstMatch
+        let toggle = app.switches["pushNotificationToggle"] //.element(matching: XCUIElement.ElementType.switch, identifier: "pushNotificationToggle") //app.switches["Enable push notifications"].firstMatch
         
         let currentOnString = toggle.value as? String
         let currentOn = currentOnString == "1"
