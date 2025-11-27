@@ -11,7 +11,7 @@ struct ContentView: View {
             uuid: "device-uuid-123")
     
     var body: some View {
-        PushRegistrationScreen(viewModel: viewModel)
+        PushRegistrationViewController(viewModel: viewModel)
     }
 }
 

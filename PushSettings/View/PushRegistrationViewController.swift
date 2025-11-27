@@ -1,30 +1,24 @@
 import SwiftUI
 
-struct PushRegistrationScreen: View {
+struct PushRegistrationViewController: View {
     
     @StateObject var viewModel: PushRegistrationViewModel
     
-    private var toggleLabelText: String {
-        viewModel.isRegistered
-        ? "Disable push notifications"
-        : "Enable push notifications"
-    }
-
     var body: some View {
         VStack(spacing: 24) {
             Text("Push Registration")
                 .font(.title)
                 .bold()
             
-            if viewModel.isLoading {
-                ProgressView("Loading.")
-            }
-            
-            Toggle(isOn: viewModel.toggleBinding) {
-                Text(viewModel.toggleLabelText)
-            }
-            .disabled(viewModel.isLoading)
-            .padding()
+            /// Reusable toggle row
+            ToggleView(
+                title: viewModel.title,
+                enabledLabel: viewModel.toggleLabelText,
+                disabledLabel: viewModel.toggleLabelText,
+                isOn: $viewModel.isRegistered,
+                isLoading: $viewModel.isLoading) { newValue in
+                    viewModel.updateToggle(to: newValue)
+                }
             .accessibilityIdentifier("pushNotificationToggle")
             
             if let info = viewModel.infoMessage {
