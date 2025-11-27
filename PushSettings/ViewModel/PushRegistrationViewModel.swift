@@ -6,23 +6,21 @@ final class PushRegistrationViewModel: ObservableObject {
     
     // MARK: - Published state for the View
     
-    /// Whether the user is effectively registered (drives the toggle).
-    @Published private(set) var isRegistered: Bool = false
+    @Published var isRegistered: Bool = false
     
-    /// Whether we are currently loading (initial fetch or register/deregister).
     @Published var isLoading: Bool = false
     
-    /// Info message for things like `.anotherDevice`.
     @Published var infoMessage: String? = nil
     
-    /// Error message when something fails.
     @Published var errorMessage: String? = nil
     
     var toggleLabelText: String {
-            isRegistered
-            ? "Disable push notifications"
-            : "Enable push notifications"
-        }
+        isRegistered
+        ? "You will not receive any notifications"
+        : "You will receive alerts and updates notifications"
+    }
+    
+    var title = "Push Notifications"
 
     // MARK: - Dependencies
     
@@ -57,24 +55,27 @@ final class PushRegistrationViewModel: ObservableObject {
         loadCurrentRegistrationState()
     }
     
-    /// Binding target for the Toggle. We don't let the toggle write directly to `isRegistered`;
-    /// instead we interpret the user's intent and run the correct flow.
-    func userSetToggle(to newValue: Bool) {
-        guard !isLoading else {
-            return
-        }
-        
-        /// If the value didn't change, nothing to do.
-        guard newValue != isRegistered else {
-            return
-        }
-        
-        if newValue {
-            startRegistrationFlow()
-        } else {
-            startDeregistrationFlow()
-        }
-    }
+    /// Called by the UI when user toggles
+    /// Binding target for the Toggle. We don't let the toggle write directly to `isRegistered`; instead we interpret the user's intent and run the correct flow.
+       func updateToggle(to newValue: Bool) {
+           guard !isLoading else {
+               return
+           }
+           
+           /// If the value didn't change, nothing to do.
+           guard newValue != isRegistered else {
+               return
+           }
+           
+           errorMessage = nil
+           infoMessage = nil
+           
+           if newValue {
+               startRegistrationFlow()
+           } else {
+               startDeregistrationFlow()
+           }
+       }
     
     // MARK: - Initial state loading
 
@@ -158,44 +159,7 @@ final class PushRegistrationViewModel: ObservableObject {
             infoMessage = nil
         }
     }
-    
-    // MARK: - Registration / De-registration flows
-    
-    private func startDeregistrationFlow() {
-        isLoading = true
-        errorMessage = nil
-        
-        /// Call both de-register use cases in parallel
-        Publishers.Zip(
-            pushAuthenticationUC.deRegister(with: uuid),
-            vendorUC.deRegisterUser(with: uuid)
-        )
-        .receive(on: DispatchQueue.main)
-        .sink { [weak self] completion in
-            guard let self = self else { return }
-            
-            self.isLoading = false
-            
-            switch completion {
-                
-            case .failure(let error):
-                self.errorMessage = "De-registration failed: \(error.localizedDescription)"
-                
-            case .finished:
-                break
-            }
-        } receiveValue: { [weak self] pushSuccess, vendorSuccess in
-            guard let self = self else { return }
-            
-            if pushSuccess && vendorSuccess {
-                self.isRegistered = false
-            } else {
-                self.errorMessage = "De-registration did not complete successfully."
-            }
-        }
-        .store(in: &cancellables)
-    }
-    
+    // MARK: - Registration flow
     private func startRegistrationFlow() {
         isLoading = true
         errorMessage = nil
@@ -242,17 +206,54 @@ final class PushRegistrationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
+
+    // MARK: - De-registration flow
+    
+    private func startDeregistrationFlow() {
+        isLoading = true
+        errorMessage = nil
+        
+        /// Call both de-register use cases in parallel
+        Publishers.Zip(
+            pushAuthenticationUC.deRegister(with: uuid),
+            vendorUC.deRegisterUser(with: uuid)
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] completion in
+            guard let self = self else { return }
+            
+            self.isLoading = false
+            
+            switch completion {
+                
+            case .failure(let error):
+                self.errorMessage = "De-registration failed: \(error.localizedDescription)"
+                
+            case .finished:
+                break
+            }
+        } receiveValue: { [weak self] pushSuccess, vendorSuccess in
+            guard let self = self else { return }
+            
+            if pushSuccess && vendorSuccess {
+                self.isRegistered = false
+            } else {
+                self.errorMessage = "De-registration did not complete successfully."
+            }
+        }
+        .store(in: &cancellables)
+    }
     
     // MARK: - Convenience binding for the View
     
-    /// a computed property that creates a Binding<Bool>.
+    /// a computed property that creates a Binding<Bool>
     var toggleBinding: Binding<Bool> {
         Binding(
             get: {
                 self.isRegistered
             },
             set: { [weak self] newValue in
-                self?.userSetToggle(to: newValue)
+                self?.updateToggle(to: newValue)
             }
         )
     }

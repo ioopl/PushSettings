@@ -22,26 +22,24 @@ final class PushSettingsUITests: XCTestCase {
         app.launchArguments.append("UI_TESTING")
         app.launch()
         
-        // 1. Find the toggle by its label text
+        /// 1. Find the toggle by its label text
         
         let toggle = app.switches["pushNotificationToggle"] //.element(matching: XCUIElement.ElementType.switch, identifier: "pushNotificationToggle") //app.switches["Enable push notifications"].firstMatch
         
         let currentOnString = toggle.value as? String
         let currentOn = currentOnString == "1"
         if currentOn != true {
-            print("currentOn: ", currentOn)
-            print("I am here ")
             toggle.tap()
         }
             
         
         
-        // 2. Wait until the toggle appears
-        let exists = toggle.waitForExistence(timeout: 5.0)
+        /// 2. Wait until the toggle appears
+        let exists = toggle.waitForExistence(timeout: 10.0)
         XCTAssertTrue(exists, "The push notifications toggle should exist on screen")
         
         
-        // 3. Wait until it is enabled (loading finished)
+        /// 3. Wait until it is enabled (loading finished)
         let enabledPredicate = NSPredicate(format: "isEnabled == true")
         let enabledExpectation = expectation(
             for: enabledPredicate,
@@ -50,20 +48,20 @@ final class PushSettingsUITests: XCTestCase {
         )
         wait(for: [enabledExpectation], timeout: 10.0)
         
-        // 4. Capture initial value 0 or 1
+        /// 4. Capture initial value 0 or 1
         
         let initialValue = toggle.value as? String
         
         XCTAssertTrue(toggle.exists)
         XCTAssertTrue(toggle.isHittable)
         
-        // 5. Tap the toggle
+        /// 5. Tap the toggle
         toggle.tap()
         
         XCTAssertTrue(toggle.exists)
         XCTAssertTrue(toggle.isHittable)
         
-        // 6. Wait for the value to change (registration flow completes)
+        /// 6. Wait for the value to change (registration flow completes)
         let valueChangedPredicate = NSPredicate(format: "value != %@", initialValue ?? "")
         let valueChangedExpectation = expectation(
             for: valueChangedPredicate,

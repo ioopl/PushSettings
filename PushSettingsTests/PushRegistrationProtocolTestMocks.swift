@@ -5,6 +5,7 @@ import Combine
 // MARK: - Test Mocks
  
 final class ImmediateSessionUC: SessionUC {
+    
     func fetchSession() -> AnyPublisher<String, Error> {
         Just("test-session-123")
             .setFailureType(to: Error.self)
