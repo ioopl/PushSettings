@@ -16,8 +16,8 @@ struct PushRegistrationViewController: View {
                 enabledLabel: viewModel.toggleLabelText,
                 disabledLabel: viewModel.toggleLabelText,
                 isOn: $viewModel.isRegistered,
-                isLoading: $viewModel.isLoading) { newValue in
-                    viewModel.updateToggle(to: newValue)
+                isLoading: $viewModel.isLoading) { newToggleState in
+                    viewModel.updateToggle(to: newToggleState)
                 }
             .accessibilityIdentifier("pushNotificationToggle")
             
