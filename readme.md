@@ -107,6 +107,48 @@ A SwiftUI screen that includes:
 
 A Simple SwiftUI Push Notifications Enable/Disable screen.
 
+Methods : 
+- **startRegistrationFlow()**
+
+    /**
+    startRegistrationFlow is a private method on ViewModel.
+    Reason : It’s called when the user tries to turn ON push notifications (via the toggle).
+    */
+    
+    /**
+    How it works: 
+     Big-picture flow in plain words
+     1. Mark UI as loading, clear old messages.
+     2. Ask the OS for notification permission + token.
+     3. Once you have the token, fetch a session and wait 3 seconds.
+     4. Once you have both token + session, call:
+        — Push backend register API,
+        — Vendor backend register API,
+        — in parallel, and wait for both.
+     5. Back on the main thread:
+        — Stop loading.
+        — If any error occurred → show “Registration failed: …”.
+        — If both calls returned true → mark isRegistered = true.
+        — If either returned false → show “Registration did not complete successfully.”
+     All of that logic is encoded as a single Combine “pipe”.
+     */
+     
+     
+- **loadCurrentRegistrationState()**
+    
+    /**
+    Reason : loadCurrentRegistrationState() is called (usually from onAppear) to answer:
+    “Given both backends, is this user currently registered or not, and do I need to show a special message?”
+    */
+    
+    /**
+    How it works: 
+    This method, loadCurrentRegistrationState(), is a private function on the ViewModel that takes no parameters and returns nothing (Void) instead, it works entirely through side effects on the ViewModel’s state.
+     When we call it, it marks the screen as loading (isLoading = true), clears any previous error/info messages, and then kicks off an asynchronous Combine pipeline. That pipeline starts by calling sessionUC.fetchSession(), which returns a publisher that will eventually emit a String session or an error. After the session is fetched, it waits an extra 3 seconds using .delay (to satisfy the requirement), then uses flatMap to call pushUC.getRegistrationStatus(session:) and attach the session to that result. Next, it flatMaps again to call vendorUC.checkRegistrationStatusPublisher(uuid:), combining everything into a single tuple (session, pushStatus, vendorStatus). The .receive(on: DispatchQueue.main) ensures that the values and completion are delivered on the main thread, so updating @Published properties is UI-safe. And finally, .sink subscribes to this whole publisher chain: in the completion closure it stops the loading state and sets an error if needed, and in receiveValue it caches the session and computes whether the user is effectively registered by calling applyCombinedStatus. In short it is an async method in behaviour (it returns immediately and finishes later), but it uses Combine publishers rather than async/await, and its "result" is reflected in the ViewModel’s observable properties, not in a return value.
+     */
+---------------------------------------------------------------------------------------------
+    
+    
 - **Combined state from multiple backends:**  
 - Two sources of truth: `PushAuthenticationUC` and `VendorUC`.
 - Combine rules:
