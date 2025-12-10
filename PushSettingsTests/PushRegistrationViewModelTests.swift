@@ -17,11 +17,10 @@ final class PushRegistrationViewModelTests: XCTestCase {
         pushRegisterShouldSucceed: Bool = true,
         pushDeRegisterShouldSucceed: Bool = true,
         vendorRegisterShouldSucceed: Bool = true,
-        vendorDeRegisterShouldSucceed: Bool = true) -> (
-        vm: PushRegistrationViewModel,
-        pushUC: TestPushAuthenticationUC,
-        vendorUC: TestVendorUC,
-        notificationService: TestNotificationService) {
+        vendorDeRegisterShouldSucceed: Bool = true) -> (vm: PushRegistrationViewModel,
+                                                        pushUC: TestPushAuthenticationUC,
+                                                        vendorUC: TestVendorUC,
+                                                        notificationService: TestNotificationService) {
             
         let sessionUC = ImmediateSessionUC()
         
@@ -50,15 +49,17 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     /**
      The toggles state depends on the following logic:
-     * The user is **registered** only if `PushAuthenticationUC.getRegistrationStatus(session:)` returns `.register` **and** `VendorUC.checkRegistrationStatusPublisher(uuid:)` returns `.register`.
+     The user is **registered** Only
+     if
+     ***`PushAuthenticationUC.getRegistrationStatus(session:)` returns `.register`
+     `and`
+     `VendorUC.checkRegistrationStatusPublisher(uuid:)` returns `.register`.
      */
     
     func testInitialState_bothSystemsRegistered_setsIsRegisteredTrue() {
         
-        let (vm, _, _, _) = makeViewModel(
-            pushStatus: .register,
-            vendorStatus: .register
-        )
+        let (vm, _, _, _) = makeViewModel(pushStatus: .register,
+                                          vendorStatus: .register)
         
         let exp = expectation(description: "becomes registered")
         
@@ -83,9 +84,8 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     func testInitialState_anotherDevice_setsUnregisteredAndShowsMessage() {
         
-        let (vm, _, _, _) = makeViewModel(
-            pushStatus: .anotherDevice,
-            vendorStatus: .register   // does not matter in this case
+        let (vm, _, _, _) = makeViewModel(pushStatus: .anotherDevice,
+                                          vendorStatus: .register   // does not matter in this case
         )
         
         let exp = expectation(description: "infoMessage set for anotherDevice")
@@ -107,13 +107,11 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     func testToggleOn_triggersRegistrationAndSetsRegisteredOnSuccess() {
         
-        let (vm, pushUC, vendorUC, _) = makeViewModel(
-            pushStatus: .unregister,
-            vendorStatus: .unregister,
-            notificationShouldSucceed: true,
-            pushRegisterShouldSucceed: true,
-            vendorRegisterShouldSucceed: true
-        )
+        let (vm, pushUC, vendorUC, _) = makeViewModel(pushStatus: .unregister,
+                                                      vendorStatus: .unregister,
+                                                      notificationShouldSucceed: true,
+                                                      pushRegisterShouldSucceed: true,
+                                                      vendorRegisterShouldSucceed: true)
         
         let exp = expectation(description: "becomes registered after toggle on")
         
@@ -139,11 +137,9 @@ final class PushRegistrationViewModelTests: XCTestCase {
     
     func testToggleOn_failsWhenNotificationPermissionDenied() {
         
-        let (viewModel, pushUC, vendorUC, notificationService) = makeViewModel(
-            pushStatus: .unregister,
-            vendorStatus: .unregister,
-            notificationShouldSucceed: false
-        )
+        let (viewModel, pushUC, vendorUC, notificationService) = makeViewModel(pushStatus: .unregister,
+                                                                               vendorStatus: .unregister,
+                                                                               notificationShouldSucceed: false)
         
         XCTAssertFalse(notificationService.shouldSucceed)
         
@@ -168,10 +164,8 @@ final class PushRegistrationViewModelTests: XCTestCase {
     func testToggleOff_triggersDeregistration() {
         
         /// Start with both systems registered
-        let (viewModel, pushUC, vendorUC, _) = makeViewModel(
-            pushStatus: .register,
-            vendorStatus: .register
-        )
+        let (viewModel, pushUC, vendorUC, _) = makeViewModel(pushStatus: .register,
+                                                             vendorStatus: .register)
         
         let becameRegistered = expectation(description: "initially becomes registered")
         
@@ -272,9 +266,8 @@ final class PushRegistrationViewModelTests: XCTestCase {
         /// Given: a View Model where PushAuthenticationUC returns .anotherDevice
         /// pushStatus and vendorStatus are just the raw statuses from two backends.
         
-        let (viewModel, pushUC, vendorUC, _) = makeViewModel(
-            pushStatus: .anotherDevice,
-            vendorStatus: .register /// vendor result shouldn't really matter in this case
+        let (viewModel, pushUC, vendorUC, _) = makeViewModel(pushStatus: .anotherDevice,
+                                                             vendorStatus: .register /// vendor result shouldn't really matter in this case
         )
         
         XCTAssertEqual(pushUC.registrationStatus, .anotherDevice)
@@ -330,13 +323,11 @@ final class PushRegistrationViewModelTests: XCTestCase {
     @MainActor
     func testToggleBindingReflectsAndControlsIsRegistered() {
         /// Given: a View Model starting unregistered, with fast-success mocks
-        let (viewModel, _, _, _) = makeViewModel(
-            pushStatus: .unregister,
-            vendorStatus: .unregister,
-            notificationShouldSucceed: true,
-            pushRegisterShouldSucceed: true,
-            vendorRegisterShouldSucceed: true
-        )
+        let (viewModel, _, _, _) = makeViewModel(pushStatus: .unregister,
+                                                 vendorStatus: .unregister,
+                                                 notificationShouldSucceed: true,
+                                                 pushRegisterShouldSucceed: true,
+                                                 vendorRegisterShouldSucceed: true)
         
         let binding = viewModel.toggleBinding
         
