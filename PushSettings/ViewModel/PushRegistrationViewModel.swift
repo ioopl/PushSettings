@@ -57,25 +57,25 @@ final class PushRegistrationViewModel: ObservableObject {
     
     /// Called by the UI when user toggles
     /// Binding target for the Toggle. We don't let the toggle write directly to `isRegistered`; instead we interpret the user's intent and run the correct flow.
-       func updateToggle(to newValue: Bool) {
-           guard !isLoading else {
-               return
-           }
-           
-           /// If the value didn't change, nothing to do.
-           guard newValue != isRegistered else {
-               return
-           }
-           
-           errorMessage = nil
-           infoMessage = nil
-           
-           if newValue {
-               startRegistrationFlow()
-           } else {
-               startDeregistrationFlow()
-           }
-       }
+    func updateToggle(to newValue: Bool) {
+        guard !isLoading else {
+            return
+        }
+        
+        /// If the value didn't change, nothing to do.
+        guard newValue != isRegistered else {
+            return
+        }
+        
+        errorMessage = nil
+        infoMessage = nil
+        
+        if newValue {
+            startRegistrationFlow()
+        } else {
+            startDeregistrationFlow()
+        }
+    }
     
     // MARK: - Initial state loading
 
